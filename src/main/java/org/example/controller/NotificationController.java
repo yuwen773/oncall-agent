@@ -137,4 +137,40 @@ public class NotificationController {
             return response;
         }
     }
+
+    // ========== 飞书卡片回调 ==========
+
+    /**
+     * 飞书卡片按钮回调
+     * POST /callback/feishu
+     * 飞书交互卡片点击按钮后会调用此接口
+     */
+    @PostMapping("/callback/feishu")
+    public ResponseEntity<String> feishuCallback(@RequestBody Map<String, Object> callbackData) {
+        try {
+            log.info("[feishu] Card callback received: {}", callbackData);
+
+            // 解析回调数据
+            // 飞书回调格式：{ "action": {...}, "context": {...} }
+            Object actionObj = callbackData.get("action");
+            if (actionObj instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> action = (Map<String, Object>) actionObj;
+                String value = (String) action.get("value");
+                if (value != null && value.contains("action=confirm")) {
+                    log.info("[feishu] Confirm action triggered");
+                    // TODO: 触发 MCP 工具执行或 Agent 继续执行
+                    return ResponseEntity.ok("{\"msg\":\"已确认\"}");
+                } else if (value != null && value.contains("action=cancel")) {
+                    log.info("[feishu] Cancel action triggered");
+                    return ResponseEntity.ok("{\"msg\":\"已取消\"}");
+                }
+            }
+
+            return ResponseEntity.ok("{\"msg\":\"callback received\"}");
+        } catch (Exception e) {
+            log.error("[feishu] Callback error: {}", e.getMessage(), e);
+            return ResponseEntity.ok("{\"msg\":\"error: " + e.getMessage() + "\"}");
+        }
+    }
 }

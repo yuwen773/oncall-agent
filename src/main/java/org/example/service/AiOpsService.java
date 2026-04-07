@@ -234,7 +234,18 @@ public class AiOpsService {
                 ### 风险评估
                 [评估当前风险等级和影响范围]
                 ```
-                
+
+                ## 通知要求
+
+                - 告警分析完成后，必须使用 sendFeishuNotification 工具将报告发送到"值班群"
+                - P0/P1 级别告警必须发送通知；P2 及以下可选择性发送
+                - target 参数传入语义标签（如"值班群"、"P0告警组"），不要传入 open_id 或 chat_id
+                - traceId 传入告警关联的唯一标识
+
+                示例：
+                - 正确：sendFeishuNotification(title="P0告警分析完成", content="...", target="值班群", traceId="alert-20260407-001")
+                - 错误：不要传入 open_id 或 chat_id
+
                 **重要提醒**：
                 - 最终输出必须是纯 Markdown 文本，不要包含 JSON 结构
                 - 不要使用 "finalReport": "..." 这样的格式

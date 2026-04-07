@@ -1,16 +1,19 @@
-# SuperBizAgent
+# OnCall Agent
 
 > 基于 Spring Boot + AI Agent 的智能问答与运维系统
 
 ## 📖 项目简介
 
-企业级智能业务代理系统，包含两大核心模块：
+企业级智能业务代理系统，包含三大核心模块：
 
 ### 1. RAG 智能问答
 集成 Milvus 向量数据库和阿里云 DashScope，提供基于检索增强生成的智能问答能力，支持多轮对话和流式输出。
 
 ### 2. AIOps 智能运维
-基于 AI Agent 的自动化运维系统，采用 Planner-Executor-Replanner 架构，实现告警分析、日志查询、智能诊断和报告生成。
+基于 AI Agent 的自动化运维系统，采用 Supervisor + Planner + Executor 架构，实现告警分析、日志查询、智能诊断和报告生成。
+
+### 3. 多渠道通知
+支持飞书、企业微信、钉钉等多渠道通知，采用适配器模式，支持语义标签路由和交互卡片（Human-in-the-Loop）。
 
 ## 🚀 核心特性
 
@@ -19,6 +22,7 @@
 - ✅ **工具集成**: 文档检索、告警查询、日志分析、时间工具
 - ✅ **会话管理**: 上下文维护、历史管理、自动清理
 - ✅ **Web 界面**: 提供测试界面和 RESTful API
+- ✅ **多渠道通知**: 飞书/企业微信/钉钉 + 语义标签路由 + 交互卡片
 
 
 ## 🛠️ 技术栈
@@ -34,10 +38,13 @@
 ## 📦 核心模块
 
 ```
-SuperBizAgent/
+oncall-agent/
 ├── src/main/java/org/example/
 │   ├── controller/
-│   │   └── ChatController.java        # 统一接口控制器 ⭐
+│   │   ├── ChatController.java        # 统一接口控制器 ⭐
+│   │   ├── FileUploadController.java  # 文件上传控制器
+│   │   ├── MilvusCheckController.java # Milvus 健康检查
+│   │   └── NotificationController.java # 通知控制器 ⭐
 │   ├── service/
 │   │   ├── ChatService.java           # 对话服务 ⭐
 │   │   ├── AiOpsService.java          # AIOps 服务 ⭐
@@ -47,7 +54,13 @@ SuperBizAgent/
 │   │   ├── DateTimeTools.java         # 时间工具
 │   │   ├── InternalDocsTools.java     # 文档检索
 │   │   ├── QueryMetricsTools.java     # 告警查询
-│   │   └── QueryLogsTools.java        # 日志查询
+│   │   ├── QueryLogsTools.java        # 日志查询
+│   │   └── NotificationTools.java     # 通知工具 ⭐
+│   ├── notification/                   # 多渠道通知模块 ⭐
+│   │   ├── model/                     # 消息模型
+│   │   ├── channel/                   # 渠道适配器
+│   │   ├── config/                    # 配置
+│   │   └── service/                   # 路由服务
 │   └── config/                        # 配置类
 ├── src/main/resources/
 │   ├── static/                        # Web 界面
@@ -101,6 +114,14 @@ POST /api/ai_ops
 - `POST /api/upload` - 上传文件并自动向量化
 - `GET /milvus/health` - Milvus 健康检查
 
+### 5. 多渠道通知
+
+- `POST /api/notification/test` - 测试发送通知
+- `POST /api/notification/config` - 配置飞书连接参数
+- `GET /api/notification/targets` - 获取语义标签映射
+- `PUT /api/notification/targets` - 更新语义标签映射
+- `POST /callback/feishu` - 飞书卡片按钮回调
+
 
 ## ⚙️ 核心配置
 
@@ -131,6 +152,21 @@ document:
   chunk:
     max-size: 800
     overlap: 100
+
+# 多渠道通知配置
+notification:
+  feishu:
+    webhook-url: "${FEISHU_WEBHOOK_URL}"
+    app-id: "${FEISHU_APP_ID}"
+    app-secret: "${FEISHU_APP_SECRET}"
+    enabled: true
+  targets:
+    值班群:
+      type: group
+      ids: ["oc_xxxxxxxxxxxx"]
+    P0告警组:
+      type: group
+      ids: ["oc_yyyyyyyyyyyyyyyy"]
 ```
 
 ### 环境变量
@@ -190,6 +226,5 @@ curl http://localhost:9900/milvus/health
 ```
 
 
-**版本**: v1.0.0  
-**作者**: chief  
+**版本**: 1.0.0
 **许可证**: MIT
